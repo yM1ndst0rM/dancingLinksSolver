@@ -16,6 +16,8 @@ public class Node {
     private Node left;
     private Node right;
 
+    private Object tag;
+
     public Node() {
         left = this;
         top = this;
@@ -53,5 +55,13 @@ public class Node {
                 bottom = n;
                 break;
         }
+    }
+
+    public Object getTag() {
+        return tag;
+    }
+
+    public void setTag(Object tag) {
+        this.tag = tag;
     }
 }
