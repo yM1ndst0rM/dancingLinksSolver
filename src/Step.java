@@ -24,4 +24,9 @@ public class Step {
     public int getVariation() {
         return variation;
     }
+
+    @Override
+    public String toString() {
+        return String.format("Step(variation: %d, row: %d, column: %d)", getVariation(), getRow(), getCol());
+    }
 }
