@@ -32,7 +32,11 @@ public class Solver {
         }
     }
 
-    public void fillMatrix(int sideLen, int variations) {
+    public void fillMatrix(){
+        fillMatrix(this.sideLen, this.variations);
+    }
+
+    private void fillMatrix(int sideLen, int variations) {
         int posCount = getPosCount(sideLen);
 
         for (int variationIndex = 0; variationIndex < variations; variationIndex++) {
