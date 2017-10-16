@@ -30,6 +30,9 @@ public class Solver {
             n.setInDirection(Node.Direction.LEFT, current);
             current = n;
         }
+
+        current.setInDirection(Node.Direction.RIGHT, headerRow);
+        headerRow.setInDirection(Node.Direction.LEFT, current);
     }
 
     public void fillMatrix(){
@@ -52,11 +55,11 @@ public class Solver {
                     firstRowElem.setTag(new Step(row, column, variationIndex));
 
                     //set column elements - new rows will be inserted as first element under header
-                    firstRowElem.setInDirection(Node.Direction.BOTTOM, currentColumnHeader.getInDirection(Node.Direction.BOTTOM));
-                    currentColumnHeader.getInDirection(Node.Direction.BOTTOM).setInDirection(Node.Direction.TOP, firstRowElem);
+                    firstRowElem.setInDirection(Node.Direction.BOTTOM, headerRow.getInDirection(Node.Direction.BOTTOM));
+                    headerRow.getInDirection(Node.Direction.BOTTOM).setInDirection(Node.Direction.TOP, firstRowElem);
 
-                    firstRowElem.setInDirection(Node.Direction.TOP, currentColumnHeader);
-                    currentColumnHeader.setInDirection(Node.Direction.BOTTOM, firstRowElem);
+                    firstRowElem.setInDirection(Node.Direction.TOP, headerRow);
+                    headerRow.setInDirection(Node.Direction.BOTTOM, firstRowElem);
 
                     int columnIndex = 0;
                     do {
@@ -105,6 +108,7 @@ public class Solver {
                 //there are no columns left: we have a solution
                 onSolutionFound(path);
             } else {
+                //onSolutionFound(path);
                 solve(path);
             }
 
@@ -194,5 +198,10 @@ public class Solver {
         }
 
         System.out.println(out.toString());
+    }
+
+
+    public Node getMatrixTopLeftCorner() {
+        return headerRow;
     }
 }

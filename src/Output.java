@@ -5,8 +5,8 @@ import com.sun.istack.internal.NotNull;
  */
 public class Output {
 
-    private static final String BLANK = "   ";
-    private static final String SINGLE_VERTICAL_LINK = " | ";
+    private static final String BLANK = "     ";
+    private static final String SINGLE_VERTICAL_LINK = "  |  ";
     private static final String SINGLE_HORIZONTAL_LINK = "-";
     private static final String HORIZONTAL_LINK_BLANK = " ";
     private static final int NOT_SET = -1;
@@ -66,7 +66,7 @@ public class Output {
         StringBuilder out = new StringBuilder();
 
         for (int outputRow = 0; outputRow < rows; outputRow++){
-            out.append(printSingleRow(matrix[outputRow]));
+            out.append(printSingleRow(matrix[outputRow])).append('\n');
         }
 
         return out.toString();
@@ -86,6 +86,8 @@ public class Output {
                 }
             }
         }
+
+        out.append('\n');
 
         for (Node rowElem : row) {
             if (rowElem == null) {
@@ -109,6 +111,7 @@ public class Output {
             }
         }
 
+        out.append('\n');
 
         for (Node rowElem : row) {
             if (rowElem == null) {
@@ -127,6 +130,6 @@ public class Output {
     }
 
     public static String singleNodeToString(@NotNull Node n) {
-        return String.format("(%s)", n.getTag());
+        return String.format("(%s)", n.getTag() != null ? n.getTag() : 'O');
     }
 }
