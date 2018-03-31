@@ -1,3 +1,5 @@
+import base.Node;
+
 import java.util.Iterator;
 
 public class LinkIterator implements Iterator<Node> {
