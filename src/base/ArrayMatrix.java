@@ -1,3 +1,5 @@
+package base;
+
 import java.util.Arrays;
 import java.util.Deque;
 import java.util.LinkedList;
@@ -11,7 +13,6 @@ public class ArrayMatrix implements SolutionMatrix {
         currentState = new char[initialRowCount][initialColCount];
     }
 
-    @Override
     public char get(int row, int col) {
         return currentState[row][col];
     }
@@ -65,10 +66,12 @@ public class ArrayMatrix implements SolutionMatrix {
     }
 
     @Override
-    public void undo() {
-        if (canUndo()) {
-            currentState = history.pop();
+    public void undo() throws IllegalStateException {
+        if (!canUndo()) {
+            throw new IllegalStateException("Cannot undo.");
         }
+
+        currentState = history.pop();
     }
 
     @Override
@@ -84,5 +87,9 @@ public class ArrayMatrix implements SolutionMatrix {
     @Override
     public int getColumnCount() {
         return currentState.length > 0 ? currentState[0].length : 0;
+    }
+
+    public void set(int row, int col, char value) {
+        this.currentState[row][col] = value;
     }
 }
