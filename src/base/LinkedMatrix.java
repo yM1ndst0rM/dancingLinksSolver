@@ -3,6 +3,7 @@ package base;
 import com.sun.istack.internal.NotNull;
 
 import java.util.Deque;
+import java.util.Iterator;
 import java.util.LinkedList;
 
 import static base.Node.Direction.*;
@@ -49,12 +50,12 @@ public class LinkedMatrix implements SolutionMatrix {
             nodeBelow.setInDirection(TOP, rowAnchor);
             nodeAbove.setInDirection(BOTTOM, rowAnchor);
             rowAnchor.setInDirection(TOP, nodeAbove);
-            for(int c = 0; c < initialState[r].length; ++c){
+            for (int c = 0; c < initialState[r].length; ++c) {
                 nodeAbove = nodeAbove.getInDirection(RIGHT);
                 nodeBelow = nodeAbove.getInDirection(BOTTOM);
 
                 Character currValue = initialState[r][c];
-                if(currValue != null){
+                if (currValue != null) {
                     current = new Node();
                     current.setTag(currValue);
 
@@ -76,14 +77,43 @@ public class LinkedMatrix implements SolutionMatrix {
         current.setInDirection(BOTTOM, topLeftCorner);
         topLeftCorner.setInDirection(TOP, current);
 
-        //TODO import the actual state
-
         history.clear();
+    }
+
+    /**
+     * Iterable over a line (vertical or horizontal) created by walking from one node to the next until
+     * it reaches the beginning or @null. Will create an endless loop if matrix is not constructed
+     * properly
+     *
+     * @param start     starting node (where to iterate from)
+     * @param direction direction to iterate over ({@link Node.Direction#BOTTOM} and {@link Node.Direction#TOP}
+     *                  will iterate vertically and {@link Node.Direction#LEFT} and {@link Node.Direction#RIGHT}
+     *                  will iterate horizontally)
+     * @return Iterable which is a view on a specific line in the matrix
+     */
+    private Iterable<Node> getLineInDirection(final Node start, final Node.Direction direction) {
+        return () -> new Iterator<Node>() {
+            Node currentNode = start;
+
+            @Override
+            public boolean hasNext() {
+                return currentNode != null && currentNode.getInDirection(direction) != start;
+            }
+
+            @Override
+            public Node next() {
+                if (currentNode != null) {
+                    currentNode = currentNode.getInDirection(direction);
+                }
+
+                return currentNode;
+            }
+        };
     }
 
     @Override
     public char get(int row, int column) {
-        return 0;
+
     }
 
     @Override
@@ -118,12 +148,12 @@ public class LinkedMatrix implements SolutionMatrix {
         int currentAnchorIndex = 0;
         while (true) {
             anchorNode = anchorNode.getInDirection(anchorWalkingDirection);
-            if(anchorNode == topLeftCorner){
+            if (anchorNode == topLeftCorner) {
                 //we have reached the outer limit of the array before finding
                 //the anchor with the correct index
                 throw new ArrayIndexOutOfBoundsException(index);
             }
-            if(currentAnchorIndex == index) break;
+            if (currentAnchorIndex == index) break;
             currentAnchorIndex++;
         }
 
@@ -150,19 +180,16 @@ public class LinkedMatrix implements SolutionMatrix {
             throw new IllegalStateException(String.format("Work on type %s is not supported.", type));
         }
 
-        Node currentNode = anchorNode;
 
-        do {
+        for (Node n : getLineInDirection(anchorNode, walkingDirection)) {
+
             //bridge every item's neighbours in the corresponding direction
-            Node orthogonalNodeA = currentNode.getInDirection(orthogonalDirectionA);
-            Node orthogonalNodeB = currentNode.getInDirection(orthogonalDirectionB);
+            Node orthogonalNodeA = n.getInDirection(orthogonalDirectionA);
+            Node orthogonalNodeB = n.getInDirection(orthogonalDirectionB);
 
             orthogonalNodeA.setInDirection(orthogonalDirectionB, orthogonalNodeB);
             orthogonalNodeB.setInDirection(orthogonalDirectionA, orthogonalNodeA);
-
-            currentNode = currentNode.getInDirection(walkingDirection);
-        } while (currentNode != anchorNode);//potential infinite loop if the array is constructed poorly
-
+        }
     }
 
     @Override
@@ -192,19 +219,14 @@ public class LinkedMatrix implements SolutionMatrix {
             throw new IllegalStateException(String.format("Work on type %s is not supported.", undoAction.actionType));
         }
 
-        Node currentNode = undoAction.anchorElement;
-
-        do {
+        for (Node n : getLineInDirection(undoAction.anchorElement, walkingDirection)) {
             //insert every item's between its previous neighbours in the corresponding direction
-            Node orthogonalNodeA = currentNode.getInDirection(orthogonalDirectionA);
-            Node orthogonalNodeB = currentNode.getInDirection(orthogonalDirectionB);
+            Node orthogonalNodeA = n.getInDirection(orthogonalDirectionA);
+            Node orthogonalNodeB = n.getInDirection(orthogonalDirectionB);
 
-            orthogonalNodeA.setInDirection(orthogonalDirectionB, currentNode);
-            orthogonalNodeB.setInDirection(orthogonalDirectionA, currentNode);
-
-            currentNode = currentNode.getInDirection(walkingDirection);
-        } while (currentNode != undoAction.anchorElement);//potential infinite loop if the array is constructed poorly
-
+            orthogonalNodeA.setInDirection(orthogonalDirectionB, n);
+            orthogonalNodeB.setInDirection(orthogonalDirectionA, n);
+        }
     }
 
     @Override
