@@ -5,12 +5,17 @@ import java.util.Deque;
 import java.util.LinkedList;
 
 public class ArrayMatrix implements SolutionMatrix {
-    private final Deque<char[][]> history;
-    private char[][] currentState;
+    private final Deque<Character[][]> history = new LinkedList<>();
+    private Character[][] currentState = new Character[0][];
 
-    public ArrayMatrix(int initialRowCount, int initialColCount) {
-        history = new LinkedList<>();
-        currentState = new char[initialRowCount][initialColCount];
+    @Override
+    public void init(final Character[][] initialState) {
+        currentState = new Character[initialState.length][];
+        for (int i = 0; i < currentState.length; i++) {
+            currentState[i] = Arrays.copyOf(initialState[i], initialState[i].length);
+        }
+
+        history.clear();
     }
 
     public char get(int row, int col) {
@@ -25,7 +30,7 @@ public class ArrayMatrix implements SolutionMatrix {
 
         history.push(currentState);
 
-        char[][] newMatrix = new char[getRowCount() - 1][];
+        Character[][] newMatrix = new Character[getRowCount() - 1][];
         int offset;
         for (int i = 0; i < newMatrix.length; ++i) {
             if (i >= row) {
@@ -48,7 +53,7 @@ public class ArrayMatrix implements SolutionMatrix {
 
         history.push(currentState);
 
-        char[][] newMatrix = new char[getRowCount()][getColumnCount() - 1];
+        Character[][] newMatrix = new Character[getRowCount()][getColumnCount() - 1];
         int offset;
         for (int i = 0; i < newMatrix.length; ++i) {
             for (int j = 0; j < newMatrix[i].length; ++j) {

@@ -1,31 +1,50 @@
 package base;
 
-import base.ArrayMatrix;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+
+import java.util.Arrays;
+import java.util.Collection;
 
 import static org.junit.Assert.*;
 
+@RunWith(Parameterized.class)
 public class SolutionMatrixTest {
 
     @Rule
     public ExpectedException thrown = ExpectedException.none();
 
-    private ArrayMatrix m;
+    private SolutionMatrix m;
     private static final char valA = 'A';
     private static final char valB = 'B';
     private static final char valC = 'C';
     private static final char valD = 'D';
 
+    private static final Character[][] initialState =
+            {
+                    {valA, valB},
+                    {valC, valD}
+            };
+
+    @Parameterized.Parameters
+    public static Collection<SolutionMatrix> data() {
+        return Arrays.asList(
+                new ArrayMatrix(),
+                new LinkedMatrix()
+        );
+    }
+
+    public SolutionMatrixTest(SolutionMatrix m) {
+        this.m = m;
+    }
+
     @Before
     public void setUp() throws Exception {
-        m = new ArrayMatrix(2, 2);
-        m.set(0, 0, valA);
-        m.set(0, 1, valB);
-        m.set(1, 0, valC);
-        m.set(1, 1, valD);
+        m.init(initialState);
     }
 
     @Test
@@ -77,7 +96,7 @@ public class SolutionMatrixTest {
     }
 
     @Test
-    public void invalidUndoThrows(){
+    public void invalidUndoThrows() {
         thrown.expect(IllegalStateException.class);
         m.undo();
     }
@@ -89,8 +108,8 @@ public class SolutionMatrixTest {
         assertEquals(valD, m.get(0, 1));
 
         m.undo();
-        assertEquals(valA, m.get(0 , 0));
-        assertEquals(valB, m.get(0 , 1));
+        assertEquals(valA, m.get(0, 0));
+        assertEquals(valB, m.get(0, 1));
     }
 
     @Test
@@ -100,8 +119,8 @@ public class SolutionMatrixTest {
         assertEquals(valD, m.get(1, 0));
 
         m.undo();
-        assertEquals(valA, m.get(0 , 0));
-        assertEquals(valC, m.get(1 , 0));
+        assertEquals(valA, m.get(0, 0));
+        assertEquals(valC, m.get(1, 0));
     }
 
     @Test

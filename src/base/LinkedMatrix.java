@@ -8,41 +8,83 @@ import java.util.LinkedList;
 import static base.Node.Direction.*;
 
 public class LinkedMatrix implements SolutionMatrix {
-    private final Node topLeftCorner = new Node();
+    private Node topLeftCorner = new Node();
     private final Deque<RemoveAction> history = new LinkedList<>();
 
 
     /**
      * @param initialState {@code char[][]} row/column
      */
-    public LinkedMatrix(final char[][] initialState) {
+    public void init(final Character[][] initialState) {
         if (initialState.length == 0) {
             return;
         }
 
-        Node current = topLeftCorner;
-        for (int r = 0; r < initialState.length; ++r) {
-            Node newNode = new Node();
-            newNode.setTag(String.format("Row %d", r));
-            current.setInDirection(BOTTOM, newNode);
-            newNode.setInDirection(TOP, current);
-            current = newNode;
-        }
-        current.setInDirection(BOTTOM, topLeftCorner);
-        topLeftCorner.setInDirection(TOP, current);
+        topLeftCorner = new Node();
 
-        current = topLeftCorner;
+        Node current = topLeftCorner;
         for (int c = 0; c < initialState[0].length; ++c) {
             Node newNode = new Node();
             newNode.setTag(String.format("Column %d", c));
+
+            newNode.setInDirection(BOTTOM, newNode);
+            newNode.setInDirection(TOP, newNode);
+
             current.setInDirection(RIGHT, newNode);
             newNode.setInDirection(LEFT, current);
             current = newNode;
         }
         current.setInDirection(RIGHT, topLeftCorner);
         topLeftCorner.setInDirection(LEFT, current);
+
+        Node nodeAbove = topLeftCorner;
+        for (int r = initialState.length - 1; r >= 0; ++r) {
+            Node rowAnchor = new Node();
+            rowAnchor.setTag(String.format("Row %d", r));
+
+            Node nodeToLeft = rowAnchor;
+
+            Node nodeBelow = topLeftCorner.getInDirection(BOTTOM);
+            rowAnchor.setInDirection(BOTTOM, nodeBelow);
+            nodeBelow.setInDirection(TOP, rowAnchor);
+            nodeAbove.setInDirection(BOTTOM, rowAnchor);
+            rowAnchor.setInDirection(TOP, nodeAbove);
+            for(int c = 0; c < initialState[r].length; ++c){
+                nodeAbove = nodeAbove.getInDirection(RIGHT);
+                nodeBelow = nodeAbove.getInDirection(BOTTOM);
+
+                Character currValue = initialState[r][c];
+                if(currValue != null){
+                    current = new Node();
+                    current.setTag(currValue);
+
+                    current.setInDirection(BOTTOM, nodeBelow);
+                    nodeBelow.setInDirection(TOP, current);
+                    nodeAbove.setInDirection(BOTTOM, current);
+                    current.setInDirection(TOP, nodeAbove);
+
+                    nodeToLeft.setInDirection(RIGHT, current);
+                    current.setInDirection(LEFT, nodeToLeft);
+
+                    nodeToLeft = current;
+                }
+            }
+
+            nodeToLeft.setInDirection(RIGHT, rowAnchor);
+            rowAnchor.setInDirection(LEFT, nodeToLeft);
+        }
+        current.setInDirection(BOTTOM, topLeftCorner);
+        topLeftCorner.setInDirection(TOP, current);
+
+        //TODO import the actual state
+
+        history.clear();
     }
 
+    @Override
+    public char get(int row, int column) {
+        return 0;
+    }
 
     @Override
     public void removeRow(final int row) {
