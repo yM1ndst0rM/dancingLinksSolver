@@ -18,7 +18,8 @@ public class ArrayMatrix implements SolutionMatrix {
         history.clear();
     }
 
-    public char get(int row, int col) {
+    @Override
+    public Character get(int row, int col) {
         return currentState[row][col];
     }
 

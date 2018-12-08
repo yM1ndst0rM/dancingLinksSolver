@@ -2,6 +2,7 @@ package base;
 
 import com.sun.istack.internal.NotNull;
 
+import java.util.ArrayList;
 import java.util.Deque;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -9,7 +10,7 @@ import java.util.LinkedList;
 import static base.Node.Direction.*;
 
 public class LinkedMatrix implements SolutionMatrix {
-    private Node topLeftCorner = new Node();
+    private Node topLeftCorner;
     private final Deque<RemoveAction> history = new LinkedList<>();
 
 
@@ -22,6 +23,7 @@ public class LinkedMatrix implements SolutionMatrix {
         }
 
         topLeftCorner = new Node();
+        topLeftCorner.setTag("top left corner");
 
         Node current = topLeftCorner;
         for (int c = 0; c < initialState[0].length; ++c) {
@@ -38,8 +40,8 @@ public class LinkedMatrix implements SolutionMatrix {
         current.setInDirection(RIGHT, topLeftCorner);
         topLeftCorner.setInDirection(LEFT, current);
 
-        Node nodeAbove = topLeftCorner;
-        for (int r = initialState.length - 1; r >= 0; ++r) {
+        for (int r = initialState.length - 1; r >= 0; --r) {
+            Node nodeAbove = topLeftCorner;
             Node rowAnchor = new Node();
             rowAnchor.setTag(String.format("Row %d", r));
 
@@ -74,8 +76,6 @@ public class LinkedMatrix implements SolutionMatrix {
             nodeToLeft.setInDirection(RIGHT, rowAnchor);
             rowAnchor.setInDirection(LEFT, nodeToLeft);
         }
-        current.setInDirection(BOTTOM, topLeftCorner);
-        topLeftCorner.setInDirection(TOP, current);
 
         history.clear();
     }
@@ -93,17 +93,21 @@ public class LinkedMatrix implements SolutionMatrix {
      */
     private Iterable<Node> getLineInDirection(final Node start, final Node.Direction direction) {
         return () -> new Iterator<Node>() {
-            Node currentNode = start;
+            Node nextNode = start;
 
             @Override
             public boolean hasNext() {
-                return currentNode != null && currentNode.getInDirection(direction) != start;
+                return nextNode != null;
             }
 
             @Override
             public Node next() {
+                Node currentNode = nextNode;
                 if (currentNode != null) {
-                    currentNode = currentNode.getInDirection(direction);
+                    nextNode = currentNode.getInDirection(direction);
+                    if(nextNode == start){
+                        nextNode = null;
+                    }
                 }
 
                 return currentNode;
@@ -112,8 +116,51 @@ public class LinkedMatrix implements SolutionMatrix {
     }
 
     @Override
-    public char get(int row, int column) {
+    public Character get(int row, int column) {
 
+        //find column anchor
+        Node columnAnchor = topLeftCorner;
+        for (int i = 0; i <= column; i++) {
+            columnAnchor = columnAnchor.getInDirection(RIGHT);
+            if(columnAnchor == topLeftCorner){//we looped around: This column does not exist
+                throw new IndexOutOfBoundsException(String.format("Attempting to access column %d. This column does not exist.", column));
+            }
+        }
+
+        //collect all nodes in this column
+        ArrayList<Node> nodesInColumn = new ArrayList<>();
+        for (Node n: getLineInDirection(columnAnchor, BOTTOM)) {
+            if (n.getTag() instanceof Character) {
+                nodesInColumn.add(n);
+            }
+        }
+
+
+        //find row anchor
+        Node rowAnchor = topLeftCorner;
+        for (int i = 0; i <= row; i++) {
+            rowAnchor = rowAnchor.getInDirection(BOTTOM);
+            if(rowAnchor == topLeftCorner){//we looped around: This row does not exist
+                throw new IndexOutOfBoundsException(String.format("Attempting to access row %d. This row does not exist.", row));
+            }
+        }
+
+        //collect all nodes in row
+        ArrayList<Node> nodesInRow = new ArrayList<>();
+        for (Node n: getLineInDirection(rowAnchor, RIGHT)) {
+            if (n.getTag() instanceof Character) {
+                nodesInRow.add(n);
+            }
+        }
+
+        //find first element which is in both - the row and the column
+        for (Node n : nodesInRow) {
+            if(nodesInColumn.contains(n)){
+                return (char) n.getTag();
+            }
+        }
+
+        return null;
     }
 
     @Override
@@ -247,30 +294,24 @@ public class LinkedMatrix implements SolutionMatrix {
     private int count(@NotNull final Type type) {
         final Node.Direction targetDirection;
         if (type == Type.ROW) {
-            targetDirection = RIGHT;
+            targetDirection = BOTTOM;
 
         } else if (type == Type.COLUMN) {
-            targetDirection = BOTTOM;
+            targetDirection = RIGHT;
 
         } else {
             //make the compiler happy
             throw new IllegalStateException(String.format("Work on type %s is not supported.", type));
         }
 
-        //walk the outermost row/column (the anchors)
-        // until the starting point is reached and
-        // count the steps
-
-        Node currentNode = topLeftCorner;
         int itemCount = 0;
-        while (true) {//potential infinite loop if the the "array" is misconstructed
-            currentNode = currentNode.getInDirection(targetDirection);
-            if (currentNode == topLeftCorner) break;
-
-            itemCount++;
+        Iterator<Node> lineIter = getLineInDirection(topLeftCorner, targetDirection).iterator();
+        while (lineIter.hasNext()) {
+            lineIter.next();
+            ++itemCount;
         }
 
-        return itemCount;
+        return itemCount - 1; //we do not count top left corner element which was returned first
     }
 
     private static class RemoveAction {
