@@ -9,4 +9,6 @@ public interface SolutionMatrix {
     boolean canUndo();
     int getRowCount();
     int getColumnCount();
+    int getRowId(int rowPosition);
+    int getColumnId(int columnPosition);
 }

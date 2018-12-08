@@ -28,7 +28,7 @@ public class LinkedMatrix implements SolutionMatrix {
         Node current = topLeftCorner;
         for (int c = 0; c < initialState[0].length; ++c) {
             Node newNode = new Node();
-            newNode.setTag(String.format("Column %d", c));
+            newNode.setTag(c);
 
             newNode.setInDirection(BOTTOM, newNode);
             newNode.setInDirection(TOP, newNode);
@@ -43,7 +43,7 @@ public class LinkedMatrix implements SolutionMatrix {
         for (int r = initialState.length - 1; r >= 0; --r) {
             Node nodeAbove = topLeftCorner;
             Node rowAnchor = new Node();
-            rowAnchor.setTag(String.format("Row %d", r));
+            rowAnchor.setTag(r);
 
             Node nodeToLeft = rowAnchor;
 
@@ -289,6 +289,34 @@ public class LinkedMatrix implements SolutionMatrix {
     @Override
     public int getColumnCount() {
         return count(Type.COLUMN);
+    }
+
+    @Override
+    public int getRowId(int rowPosition) {
+        //find row anchor
+        Node rowAnchor = topLeftCorner;
+        for (int i = 0; i <= rowPosition; i++) {
+            rowAnchor = rowAnchor.getInDirection(BOTTOM);
+            if(rowAnchor == topLeftCorner){//we looped around: This row does not exist
+                throw new IndexOutOfBoundsException(String.format("Attempting to access row %d. This row does not exist.", rowPosition));
+            }
+        }
+
+        return (int) rowAnchor.getTag();
+    }
+
+    @Override
+    public int getColumnId(int columnPosition) {
+        //find column anchor
+        Node columnAnchor = topLeftCorner;
+        for (int i = 0; i <= columnPosition; i++) {
+            columnAnchor = columnAnchor.getInDirection(RIGHT);
+            if(columnAnchor == topLeftCorner){//we looped around: This column does not exist
+                throw new IndexOutOfBoundsException(String.format("Attempting to access column %d. This column does not exist.", columnPosition));
+            }
+        }
+
+        return (int) columnAnchor.getTag();
     }
 
     private int count(@NotNull final Type type) {

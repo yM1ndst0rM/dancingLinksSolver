@@ -10,9 +10,22 @@ public class ArrayMatrix implements SolutionMatrix {
 
     @Override
     public void init(final Object[][] initialState) {
-        currentState = new Object[initialState.length][];
-        for (int i = 0; i < currentState.length; i++) {
-            currentState[i] = Arrays.copyOf(initialState[i], initialState[i].length);
+        currentState = new Object[initialState.length + 1][]; //+1 to account for headers
+
+        //insert column ids
+        currentState[0] = new Object[initialState[0].length + 1];
+        for (int i = 0; i < currentState[0].length; i++) {
+            currentState[0][i] = i - 1;
+        }
+
+        //fill rows
+        for (int i = 1; i < currentState.length; i++) {
+            currentState[i] = new Object[initialState[i - 1].length + 1]; //+1 to account for headers
+            currentState[i][0] = i - 1; //insert row id in first position
+
+            if (initialState[i - 1].length >= 0) {
+                System.arraycopy(initialState[i - 1], 0, currentState[i], 1, initialState[i - 1].length);
+            }
         }
 
         history.clear();
@@ -20,21 +33,22 @@ public class ArrayMatrix implements SolutionMatrix {
 
     @Override
     public Object get(int row, int col) {
-        return currentState[row][col];
+        return currentState[row + 1][col + 1];
     }
 
     @Override
-    public void removeRow(int row) {
-        if (row >= currentState.length || row < 0) {
+    public void removeRow(final int row) {
+        final int actualRowIndex = row + 1; //because of the header
+        if (actualRowIndex >= currentState.length || actualRowIndex < 1) {
             throw new ArrayIndexOutOfBoundsException(row);
         }
 
         history.push(currentState);
 
-        Object[][] newMatrix = new Object[getRowCount() - 1][];
+        Object[][] newMatrix = new Object[currentState.length - 1][];
         int offset;
         for (int i = 0; i < newMatrix.length; ++i) {
-            if (i >= row) {
+            if (i >= actualRowIndex) {
                 offset = 1;
             } else {
                 offset = 0;
@@ -47,18 +61,19 @@ public class ArrayMatrix implements SolutionMatrix {
     }
 
     @Override
-    public void removeColumn(int col) {
-        if (col >= currentState.length || col < 0) {
+    public void removeColumn(final int col) {
+        final int actualColIndex = col + 1; //because of the header
+        if (actualColIndex >= currentState.length || actualColIndex < 1) {
             throw new ArrayIndexOutOfBoundsException(col);
         }
 
         history.push(currentState);
 
-        Object[][] newMatrix = new Object[getRowCount()][getColumnCount() - 1];
+        Object[][] newMatrix = new Object[currentState.length][currentState[0].length - 1];
         int offset;
         for (int i = 0; i < newMatrix.length; ++i) {
             for (int j = 0; j < newMatrix[i].length; ++j) {
-                if (j >= col) {
+                if (j >= actualColIndex) {
                     offset = 1;
                 } else {
                     offset = 0;
@@ -87,15 +102,25 @@ public class ArrayMatrix implements SolutionMatrix {
 
     @Override
     public int getRowCount() {
-        return currentState.length;
+        return currentState.length - 1;
     }
 
     @Override
     public int getColumnCount() {
-        return currentState.length > 0 ? currentState[0].length : 0;
+        return currentState.length > 0 ? currentState[0].length - 1 : 0;
+    }
+
+    @Override
+    public int getRowId(int rowPosition) {
+        return (int) currentState[rowPosition + 1][0];
+    }
+
+    @Override
+    public int getColumnId(int columnPosition) {
+        return (int) currentState[0][columnPosition + 1];
     }
 
     public void set(int row, int col, Object value) {
-        this.currentState[row][col] = value;
+        this.currentState[row + 1][col + 1] = value;
     }
 }
