@@ -15,9 +15,9 @@ public class LinkedMatrix implements SolutionMatrix {
 
 
     /**
-     * @param initialState {@code char[][]} row/column
+     * @param initialState {@code Object[][]} row/column
      */
-    public void init(final Character[][] initialState) {
+    public void init(final Object[][] initialState) {
         if (initialState.length == 0) {
             return;
         }
@@ -56,7 +56,7 @@ public class LinkedMatrix implements SolutionMatrix {
                 nodeAbove = nodeAbove.getInDirection(RIGHT);
                 nodeBelow = nodeAbove.getInDirection(BOTTOM);
 
-                Character currValue = initialState[r][c];
+                Object currValue = initialState[r][c];
                 if (currValue != null) {
                     current = new Node();
                     current.setTag(currValue);
@@ -116,7 +116,7 @@ public class LinkedMatrix implements SolutionMatrix {
     }
 
     @Override
-    public Character get(int row, int column) {
+    public Object get(int row, int column) {
 
         //find column anchor
         Node columnAnchor = topLeftCorner;
@@ -130,7 +130,7 @@ public class LinkedMatrix implements SolutionMatrix {
         //collect all nodes in this column
         ArrayList<Node> nodesInColumn = new ArrayList<>();
         for (Node n: getLineInDirection(columnAnchor, BOTTOM)) {
-            if (n.getTag() instanceof Character) {
+            if (n.getTag() != null) {
                 nodesInColumn.add(n);
             }
         }
@@ -148,7 +148,7 @@ public class LinkedMatrix implements SolutionMatrix {
         //collect all nodes in row
         ArrayList<Node> nodesInRow = new ArrayList<>();
         for (Node n: getLineInDirection(rowAnchor, RIGHT)) {
-            if (n.getTag() instanceof Character) {
+            if (n.getTag() != null) {
                 nodesInRow.add(n);
             }
         }
@@ -156,7 +156,7 @@ public class LinkedMatrix implements SolutionMatrix {
         //find first element which is in both - the row and the column
         for (Node n : nodesInRow) {
             if(nodesInColumn.contains(n)){
-                return (char) n.getTag();
+                return n.getTag();
             }
         }
 

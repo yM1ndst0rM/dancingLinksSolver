@@ -5,12 +5,12 @@ import java.util.Deque;
 import java.util.LinkedList;
 
 public class ArrayMatrix implements SolutionMatrix {
-    private final Deque<Character[][]> history = new LinkedList<>();
-    private Character[][] currentState = new Character[0][];
+    private final Deque<Object[][]> history = new LinkedList<>();
+    private Object[][] currentState = new Character[0][];
 
     @Override
-    public void init(final Character[][] initialState) {
-        currentState = new Character[initialState.length][];
+    public void init(final Object[][] initialState) {
+        currentState = new Object[initialState.length][];
         for (int i = 0; i < currentState.length; i++) {
             currentState[i] = Arrays.copyOf(initialState[i], initialState[i].length);
         }
@@ -19,7 +19,7 @@ public class ArrayMatrix implements SolutionMatrix {
     }
 
     @Override
-    public Character get(int row, int col) {
+    public Object get(int row, int col) {
         return currentState[row][col];
     }
 
@@ -31,7 +31,7 @@ public class ArrayMatrix implements SolutionMatrix {
 
         history.push(currentState);
 
-        Character[][] newMatrix = new Character[getRowCount() - 1][];
+        Object[][] newMatrix = new Object[getRowCount() - 1][];
         int offset;
         for (int i = 0; i < newMatrix.length; ++i) {
             if (i >= row) {
@@ -54,7 +54,7 @@ public class ArrayMatrix implements SolutionMatrix {
 
         history.push(currentState);
 
-        Character[][] newMatrix = new Character[getRowCount()][getColumnCount() - 1];
+        Object[][] newMatrix = new Object[getRowCount()][getColumnCount() - 1];
         int offset;
         for (int i = 0; i < newMatrix.length; ++i) {
             for (int j = 0; j < newMatrix[i].length; ++j) {
@@ -95,7 +95,7 @@ public class ArrayMatrix implements SolutionMatrix {
         return currentState.length > 0 ? currentState[0].length : 0;
     }
 
-    public void set(int row, int col, char value) {
+    public void set(int row, int col, Object value) {
         this.currentState[row][col] = value;
     }
 }
