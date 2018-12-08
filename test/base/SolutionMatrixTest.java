@@ -52,8 +52,8 @@ public class SolutionMatrixTest {
         m.removeRow(0);
         assertEquals(1, m.getRowCount());
         assertEquals(2, m.getColumnCount());
-        assertEquals((Character) valC, m.get(0, 0));
-        assertEquals((Character) valD, m.get(0, 1));
+        assertEquals(valC, m.get(0, 0));
+        assertEquals(valD, m.get(0, 1));
     }
 
     @Test
@@ -77,8 +77,8 @@ public class SolutionMatrixTest {
         m.removeColumn(0);
         assertEquals(2, m.getRowCount());
         assertEquals(1, m.getColumnCount());
-        assertEquals((Character) valB, m.get(0, 0));
-        assertEquals((Character) valD, m.get(1, 0));
+        assertEquals(valB, m.get(0, 0));
+        assertEquals(valD, m.get(1, 0));
     }
 
     @Test
@@ -105,23 +105,23 @@ public class SolutionMatrixTest {
     @Test
     public void undoRow() {
         m.removeRow(0);
-        assertEquals((Character) valC, m.get(0, 0));
-        assertEquals((Character) valD, m.get(0, 1));
+        assertEquals(valC, m.get(0, 0));
+        assertEquals(valD, m.get(0, 1));
 
         m.undo();
-        assertEquals((Character) valA, m.get(0, 0));
-        assertEquals((Character) valB, m.get(0, 1));
+        assertEquals(valA, m.get(0, 0));
+        assertEquals(valB, m.get(0, 1));
     }
 
     @Test
     public void undoCol() {
         m.removeColumn(0);
-        assertEquals((Character) valB, m.get(0, 0));
-        assertEquals((Character) valD, m.get(1, 0));
+        assertEquals(valB, m.get(0, 0));
+        assertEquals(valD, m.get(1, 0));
 
         m.undo();
-        assertEquals((Character) valA, m.get(0, 0));
-        assertEquals((Character) valC, m.get(1, 0));
+        assertEquals(valA, m.get(0, 0));
+        assertEquals(valC, m.get(1, 0));
     }
 
     @Test
@@ -155,5 +155,59 @@ public class SolutionMatrixTest {
 
         m.removeColumn(1);
         assertEquals(1, m.getColumnCount());
+    }
+
+    @Test
+    public void getColumnId() {
+        assertEquals(0, m.getColumnId(0));
+        assertEquals(1, m.getColumnId(1));
+
+        //nothing should change here
+        m.removeRow(0);
+        assertEquals(0, m.getColumnId(0));
+        assertEquals(1, m.getColumnId(1));
+
+        //column shift one to the left
+        m.removeColumn(0);
+        assertEquals(1, m.getColumnId(0));
+
+        //column ids get correctly restored after undo
+        m.undo();
+        assertEquals(0, m.getColumnId(0));
+        assertEquals(1, m.getColumnId(1));
+    }
+
+    @Test
+    public void getColumnIdForInvalidPositionThrows() {
+        m.removeColumn(0);
+        thrown.expect(IndexOutOfBoundsException.class);
+        m.getColumnId(1);
+    }
+
+    @Test
+    public void getRowId() {
+        assertEquals(0, m.getRowId(0));
+        assertEquals(1, m.getRowId(1));
+
+        //nothing should change here
+        m.removeColumn(0);
+        assertEquals(0, m.getRowId(0));
+        assertEquals(1, m.getRowId(1));
+
+        //row shift one up
+        m.removeRow(0);
+        assertEquals(1, m.getRowId(0));
+
+        //row ids get correctly restored after undo
+        m.undo();
+        assertEquals(0, m.getRowId(0));
+        assertEquals(1, m.getRowId(1));
+    }
+
+    @Test
+    public void getRowIdForInvalidPositionThrows() {
+        m.removeRow(0);
+        thrown.expect(IndexOutOfBoundsException.class);
+        m.getRowId(1);
     }
 }
