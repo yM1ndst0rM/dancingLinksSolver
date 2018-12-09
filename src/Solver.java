@@ -1,5 +1,5 @@
 import base.SolutionMatrix;
-import com.sun.istack.internal.NotNull;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;

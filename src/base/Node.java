@@ -1,6 +1,7 @@
 package base;
 
-import com.sun.istack.internal.NotNull;
+
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Created by Yuliy on 04.07.2017.
