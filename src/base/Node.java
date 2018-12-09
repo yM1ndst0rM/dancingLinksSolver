@@ -1,3 +1,5 @@
+package base;
+
 import com.sun.istack.internal.NotNull;
 
 /**
@@ -63,5 +65,10 @@ public class Node {
 
     public void setTag(Object tag) {
         this.tag = tag;
+    }
+
+    @Override
+    public String toString() {
+        return "Node{" + tag + '}';
     }
 }
