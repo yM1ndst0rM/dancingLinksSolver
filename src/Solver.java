@@ -1,46 +1,95 @@
-import base.Node;
+import base.SolutionMatrix;
 import com.sun.istack.internal.NotNull;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 /**
  * Created by Yuliy on 04.07.2017.
  */
 public class Solver {
-    private final int sideLen;
-    private final int variations;
-    private Node headerRow;
-
-    public Solver(int sideLen, int variations) {
+    public static void solve(int sideLen, int variationsCount, SolutionMatrix m, SolutionListener l){
         if (sideLen <= 0)
             throw new IllegalArgumentException("Matrix side length param may not be less then or equal 0. Current value: " + sideLen);
-        if (variations <= 0)
-            throw new IllegalArgumentException("Variations param may not be less then or equal 0. Current value: " + sideLen);
+        if (variationsCount <= 0)
+            throw new IllegalArgumentException("variationsCount param may not be less then or equal 0. Current value: " + sideLen);
 
-        this.sideLen = sideLen;
-        this.variations = variations;
+        //create base matrix
 
-        int headerRowLen = variations * sideLen;
-        Node current = new Node();//this will be the top left corner node
-        headerRow = current;
-        for (int i = 0; i < headerRowLen; ++i) {
-            Node n = new Node();
-            current.setInDirection(Node.Direction.RIGHT, n);
-            n.setInDirection(Node.Direction.LEFT, current);
-            current = n;
+        //Count available spaces using lower triangle matrix as there is no need
+        // to account for the rest of the matrix for symmetry reasons
+        int availableSpacesCount = Utils.elemSum(sideLen);
+
+        //conditions are:
+        // - Every row/column (one condition for symmetry reasons) contains every variation exactly once.
+        // - Every space is occupied at most once
+        int conditionsCount = sideLen * variationsCount + availableSpacesCount;
+
+        //possible steps are:
+        // For every available space occupy it with every possible variation in turn
+        int possibleStepsCount = availableSpacesCount * variationsCount;
+
+        //this will help retrace what steps were taken, when a solution is found
+        Step[] possibleSteps = new Step[possibleStepsCount];
+
+        //actual matrix holding the layout of the problem
+        String[][] solutionsMatrix = new String[possibleStepsCount][conditionsCount];
+
+        int optionIndex = 0;
+        for (int row = 0; row < sideLen; row++) {
+            for (int column = 0; column < row; column++) {
+                for (int variation = 0; variation < variationsCount; variation++, optionIndex++) {
+                    possibleSteps[optionIndex] = new Step(row, column, variation);
+
+                    solutionsMatrix[optionIndex][variation * sideLen + row] =
+                            String.format("row/column %d occupied by variation %d", row, variation);
+
+                    solutionsMatrix[optionIndex][variation * sideLen + column] =
+                            String.format("row/column %d occupied by variation %d", column, variation);
+
+                    solutionsMatrix[optionIndex][variationsCount * sideLen + Utils.elemPos(row, column)] =
+                            String.format("position %d (row: %d, col: %d) occupied by variation %d", Utils.elemPos(row, column), row, column, variation);
+                }
+            }
         }
 
-        current.setInDirection(Node.Direction.RIGHT, headerRow);
-        headerRow.setInDirection(Node.Direction.LEFT, current);
+        m.init(solutionsMatrix);
+
+
+        //solve it
+        nextSolveStep(possibleSteps, l, sideLen * variationsCount, 0, m, new ArrayList<>());
     }
 
-    public void fillMatrix(){
-        fillMatrix(this.sideLen, this.variations);
+    private static void nextSolveStep(
+            @NotNull final Step[] possibleSteps,
+            @NotNull final SolutionListener l,
+            final int firstOptionalConditionId,
+            final int lastStepPosition,
+            @NotNull final SolutionMatrix m,
+            @NotNull final List<Step> history){
+
+        if(m.getColumnCount() == 0 || m.getColumnId(0) >= firstOptionalConditionId){
+            l.onSolutionFound(history);
+            return;
+        }
+
+        int rowCount = m.getRowCount();
+        for (int i = lastStepPosition; i < rowCount; i++) {
+            history.add(possibleSteps[m.getRowId(i)]);
+            m.clearRowAndAffectedColumns(i);
+
+            nextSolveStep(possibleSteps, l, firstOptionalConditionId, i, m, history);
+
+            m.undo();
+            history.remove(history.size() - 1);
+        }
     }
 
-    private void fillMatrix(int sideLen, int variations) {
+    public interface SolutionListener{
+        void onSolutionFound(List<Step> stepsToSolution);
+    }
+
+ /*   private void fillMatrix(int sideLen, int variations) {
         int posCount = getPosCount(sideLen);
 
         for (int variationIndex = 0; variationIndex < variations; variationIndex++) {
@@ -164,6 +213,7 @@ public class Solver {
         return (sideLen * (sideLen - 1)) / 2;
     }
 
+
     private void onSolutionFound(@NotNull List<Node> path){
         ArrayList<Step> solution = new ArrayList<>(path.size());
         for (Node n :path) {
@@ -200,9 +250,5 @@ public class Solver {
 
         System.out.println(out.toString());
     }
-
-
-    public Node getMatrixTopLeftCorner() {
-        return headerRow;
-    }
+*/
 }
