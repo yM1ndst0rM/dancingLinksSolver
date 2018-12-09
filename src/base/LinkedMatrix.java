@@ -11,7 +11,7 @@ import static base.Node.Direction.*;
 
 public class LinkedMatrix implements SolutionMatrix {
     private Node topLeftCorner;
-    private final Deque<RemoveAction> history = new LinkedList<>();
+    private final Deque<UndoableAction> history = new LinkedList<>();
 
 
     /**
@@ -28,10 +28,7 @@ public class LinkedMatrix implements SolutionMatrix {
         Node current = topLeftCorner;
         for (int c = 0; c < initialState[0].length; ++c) {
             Node newNode = new Node();
-            newNode.setTag(c);
-
-            newNode.setInDirection(BOTTOM, newNode);
-            newNode.setInDirection(TOP, newNode);
+            newNode.setTag(new HeaderTag(c));
 
             current.setInDirection(RIGHT, newNode);
             newNode.setInDirection(LEFT, current);
@@ -43,7 +40,7 @@ public class LinkedMatrix implements SolutionMatrix {
         for (int r = initialState.length - 1; r >= 0; --r) {
             Node nodeAbove = topLeftCorner;
             Node rowAnchor = new Node();
-            rowAnchor.setTag(r);
+            rowAnchor.setTag(new HeaderTag(r));
 
             Node nodeToLeft = rowAnchor;
 
@@ -105,7 +102,7 @@ public class LinkedMatrix implements SolutionMatrix {
                 Node currentNode = nextNode;
                 if (currentNode != null) {
                     nextNode = currentNode.getInDirection(direction);
-                    if(nextNode == start){
+                    if (nextNode == start) {
                         nextNode = null;
                     }
                 }
@@ -119,17 +116,11 @@ public class LinkedMatrix implements SolutionMatrix {
     public Object get(int row, int column) {
 
         //find column anchor
-        Node columnAnchor = topLeftCorner;
-        for (int i = 0; i <= column; i++) {
-            columnAnchor = columnAnchor.getInDirection(RIGHT);
-            if(columnAnchor == topLeftCorner){//we looped around: This column does not exist
-                throw new IndexOutOfBoundsException(String.format("Attempting to access column %d. This column does not exist.", column));
-            }
-        }
+        Node columnAnchor = getAnchor(Type.COLUMN, column);
 
         //collect all nodes in this column
         ArrayList<Node> nodesInColumn = new ArrayList<>();
-        for (Node n: getLineInDirection(columnAnchor, BOTTOM)) {
+        for (Node n : getLineInDirection(columnAnchor, BOTTOM)) {
             if (n.getTag() != null) {
                 nodesInColumn.add(n);
             }
@@ -137,17 +128,11 @@ public class LinkedMatrix implements SolutionMatrix {
 
 
         //find row anchor
-        Node rowAnchor = topLeftCorner;
-        for (int i = 0; i <= row; i++) {
-            rowAnchor = rowAnchor.getInDirection(BOTTOM);
-            if(rowAnchor == topLeftCorner){//we looped around: This row does not exist
-                throw new IndexOutOfBoundsException(String.format("Attempting to access row %d. This row does not exist.", row));
-            }
-        }
+        Node rowAnchor = getAnchor(Type.ROW, row);
 
         //collect all nodes in row
         ArrayList<Node> nodesInRow = new ArrayList<>();
-        for (Node n: getLineInDirection(rowAnchor, RIGHT)) {
+        for (Node n : getLineInDirection(rowAnchor, RIGHT)) {
             if (n.getTag() != null) {
                 nodesInRow.add(n);
             }
@@ -155,7 +140,7 @@ public class LinkedMatrix implements SolutionMatrix {
 
         //find first element which is in both - the row and the column
         for (Node n : nodesInRow) {
-            if(nodesInColumn.contains(n)){
+            if (nodesInColumn.contains(n)) {
                 return n.getTag();
             }
         }
@@ -165,48 +150,42 @@ public class LinkedMatrix implements SolutionMatrix {
 
     @Override
     public void removeRow(final int row) {
-        remove(Type.ROW, row);
+        remove(Type.ROW, getAnchor(Type.ROW, row));
     }
 
     @Override
     public void removeColumn(final int col) {
-        remove(Type.COLUMN, col);
+        remove(Type.COLUMN, getAnchor(Type.COLUMN, col));
     }
 
-    private void remove(@NotNull final Type type, final int index) {
-        if (index < 0) {
-            throw new ArrayIndexOutOfBoundsException(index);
+    private Node getAnchor(final Type type, final int index) {
+        if(index < 0){
+            throw new IndexOutOfBoundsException(String.format("Attempting to access column/row %d. This column/row does not exist.", index));
         }
 
-        //find correct anchor element
+        final Node.Direction walkingDirection;
 
-        final Node.Direction anchorWalkingDirection;
         if (type == Type.ROW) {
-            anchorWalkingDirection = BOTTOM;
-
-        } else if (type == Type.COLUMN) {
-            anchorWalkingDirection = RIGHT;
+            walkingDirection = BOTTOM;
         } else {
-            //make the compiler happy
-            throw new IllegalStateException(String.format("Work on type %s is not supported.", type));
+            walkingDirection = RIGHT;
         }
 
-        Node anchorNode = topLeftCorner;
-        int currentAnchorIndex = 0;
-        while (true) {
-            anchorNode = anchorNode.getInDirection(anchorWalkingDirection);
-            if (anchorNode == topLeftCorner) {
-                //we have reached the outer limit of the array before finding
-                //the anchor with the correct index
-                throw new ArrayIndexOutOfBoundsException(index);
+        //find column anchor
+        Node anchor = topLeftCorner;
+        for (int i = 0; i <= index; i++) {
+            anchor = anchor.getInDirection(walkingDirection);
+            if (anchor == topLeftCorner) {//we looped around: This column/row does not exist
+                throw new IndexOutOfBoundsException(String.format("Attempting to access column/row %d. This column/row does not exist.", index));
             }
-            if (currentAnchorIndex == index) break;
-            currentAnchorIndex++;
         }
 
+        return anchor;
+    }
 
+    private void remove(@NotNull final Type type, final Node startFrom) {
         //remember anchor element to undo it
-        history.push(new RemoveAction(type, anchorNode));
+        history.push(new RemoveAction(type, startFrom));
 
         //walk every item
         final Node.Direction orthogonalDirectionA;
@@ -228,7 +207,7 @@ public class LinkedMatrix implements SolutionMatrix {
         }
 
 
-        for (Node n : getLineInDirection(anchorNode, walkingDirection)) {
+        for (Node n : getLineInDirection(startFrom, walkingDirection)) {
 
             //bridge every item's neighbours in the corresponding direction
             Node orthogonalNodeA = n.getInDirection(orthogonalDirectionA);
@@ -245,34 +224,42 @@ public class LinkedMatrix implements SolutionMatrix {
             throw new IllegalStateException("Cannot undo.");
         }
 
-        RemoveAction undoAction = history.pop();
+        UndoableAction undoAction = history.pop();
 
-        //walk every item
-        final Node.Direction orthogonalDirectionA;
-        final Node.Direction orthogonalDirectionB;
-        final Node.Direction walkingDirection;
+        if(undoAction instanceof RemoveAction) {
+            RemoveAction undoRemoveAction = (RemoveAction) undoAction;
 
-        if (undoAction.actionType == Type.ROW) {
-            orthogonalDirectionA = TOP;
-            orthogonalDirectionB = BOTTOM;
-            walkingDirection = RIGHT;
+            //walk every item
+            final Node.Direction orthogonalDirectionA;
+            final Node.Direction orthogonalDirectionB;
+            final Node.Direction walkingDirection;
 
-        } else if (undoAction.actionType == Type.COLUMN) {
-            orthogonalDirectionA = LEFT;
-            orthogonalDirectionB = RIGHT;
-            walkingDirection = BOTTOM;
-        } else {
-            //make the compiler happy
-            throw new IllegalStateException(String.format("Work on type %s is not supported.", undoAction.actionType));
-        }
+            if (undoRemoveAction.actionType == Type.ROW) {
+                orthogonalDirectionA = TOP;
+                orthogonalDirectionB = BOTTOM;
+                walkingDirection = RIGHT;
 
-        for (Node n : getLineInDirection(undoAction.anchorElement, walkingDirection)) {
-            //insert every item's between its previous neighbours in the corresponding direction
-            Node orthogonalNodeA = n.getInDirection(orthogonalDirectionA);
-            Node orthogonalNodeB = n.getInDirection(orthogonalDirectionB);
+            } else if (undoRemoveAction.actionType == Type.COLUMN) {
+                orthogonalDirectionA = LEFT;
+                orthogonalDirectionB = RIGHT;
+                walkingDirection = BOTTOM;
+            } else {
+                //make the compiler happy
+                throw new IllegalStateException(String.format("Work on type %s is not supported.", undoRemoveAction.actionType));
+            }
 
-            orthogonalNodeA.setInDirection(orthogonalDirectionB, n);
-            orthogonalNodeB.setInDirection(orthogonalDirectionA, n);
+            for (Node n : getLineInDirection(undoRemoveAction.anchorElement, walkingDirection)) {
+                //insert every item's between its previous neighbours in the corresponding direction
+                Node orthogonalNodeA = n.getInDirection(orthogonalDirectionA);
+                Node orthogonalNodeB = n.getInDirection(orthogonalDirectionB);
+
+                orthogonalNodeA.setInDirection(orthogonalDirectionB, n);
+                orthogonalNodeB.setInDirection(orthogonalDirectionA, n);
+            }
+        }else if(undoAction instanceof MultipleUndoAction){
+            for (int i = 0; i < ((MultipleUndoAction) undoAction).undoActionsCount; i++) {
+                undo();
+            }
         }
     }
 
@@ -293,30 +280,39 @@ public class LinkedMatrix implements SolutionMatrix {
 
     @Override
     public int getRowId(int rowPosition) {
-        //find row anchor
-        Node rowAnchor = topLeftCorner;
-        for (int i = 0; i <= rowPosition; i++) {
-            rowAnchor = rowAnchor.getInDirection(BOTTOM);
-            if(rowAnchor == topLeftCorner){//we looped around: This row does not exist
-                throw new IndexOutOfBoundsException(String.format("Attempting to access row %d. This row does not exist.", rowPosition));
-            }
-        }
-
-        return (int) rowAnchor.getTag();
+        return ((HeaderTag) getAnchor(Type.ROW, rowPosition).getTag()).id;
     }
 
     @Override
     public int getColumnId(int columnPosition) {
-        //find column anchor
-        Node columnAnchor = topLeftCorner;
-        for (int i = 0; i <= columnPosition; i++) {
-            columnAnchor = columnAnchor.getInDirection(RIGHT);
-            if(columnAnchor == topLeftCorner){//we looped around: This column does not exist
-                throw new IndexOutOfBoundsException(String.format("Attempting to access column %d. This column does not exist.", columnPosition));
+        return ((HeaderTag) getAnchor(Type.COLUMN, columnPosition).getTag()).id;
+    }
+
+    @Override
+    public void clearRowAndAffectedColumns(int rowPosition) {
+        Node rowAnchor = getAnchor(Type.ROW, rowPosition);
+
+        int performedOperationsCount = 0;
+
+        Node currentNode = rowAnchor.getInDirection(RIGHT);
+        while (currentNode != rowAnchor) {
+            currentNode = currentNode.getInDirection(RIGHT);
+
+            //remove all affected columns
+            remove(Type.COLUMN, currentNode);
+            performedOperationsCount++;
+
+            //for each affected column remove all rows affected by that
+            // but be careful not to remove the header row
+            for (Node n : getLineInDirection(currentNode, BOTTOM)) {
+                if (!(n.getTag() instanceof HeaderTag)) {
+                    remove(Type.ROW, n);
+                    performedOperationsCount++;
+                }
             }
         }
 
-        return (int) columnAnchor.getTag();
+        history.push(new MultipleUndoAction(performedOperationsCount));
     }
 
     private int count(@NotNull final Type type) {
@@ -342,9 +338,11 @@ public class LinkedMatrix implements SolutionMatrix {
         return itemCount - 1; //we do not count top left corner element which was returned first
     }
 
-    private static class RemoveAction {
-        public final Type actionType;
-        public final Node anchorElement;
+    private interface UndoableAction{}
+
+    private static class RemoveAction implements UndoableAction{
+        private final Type actionType;
+        private final Node anchorElement;
 
         private RemoveAction(Type removeActionType, Node removeAnchorElement) {
             this.actionType = removeActionType;
@@ -352,8 +350,29 @@ public class LinkedMatrix implements SolutionMatrix {
         }
     }
 
+    private static class MultipleUndoAction implements UndoableAction{
+        private final int undoActionsCount;
+
+        private MultipleUndoAction(int undoActionsCount) {
+            this.undoActionsCount = undoActionsCount;
+        }
+    }
+
     private enum Type {
         ROW,
         COLUMN
+    }
+
+    private static class HeaderTag {
+        final int id;
+
+        private HeaderTag(int id) {
+            this.id = id;
+        }
+
+        @Override
+        public String toString() {
+            return "HeaderTag{" + id + '}';
+        }
     }
 }

@@ -1,8 +1,6 @@
 package base;
 
-import java.util.Arrays;
-import java.util.Deque;
-import java.util.LinkedList;
+import java.util.*;
 
 public class ArrayMatrix implements SolutionMatrix {
     private final Deque<Object[][]> history = new LinkedList<>();
@@ -118,6 +116,59 @@ public class ArrayMatrix implements SolutionMatrix {
     @Override
     public int getColumnId(int columnPosition) {
         return (int) currentState[0][columnPosition + 1];
+    }
+
+    @Override
+    public void clearRowAndAffectedColumns(final int rowPosition) {
+        final int actualRowIndex = rowPosition + 1;
+        Set<Integer> rowsToKill = new HashSet<>();
+        Set<Integer> columnsToKill = new HashSet<>();
+
+        for (int i = 1; i < currentState[actualRowIndex].length; i++) {
+            //pick all columns which have intersections with this row
+            if(currentState[actualRowIndex][i] != null){
+                columnsToKill.add(i);
+                for (int j = 1; j < currentState.length; j++) {
+
+                    //for each of affected columns also pick all intersecting rows
+                    if(currentState[j][i] != null){
+                        rowsToKill.add(j);
+                    }
+                }
+            }
+        }
+
+        //now remove all elements marked for deletion
+        history.push(currentState);
+
+        //order of deletion is important so that we can account already deleted rows/cols when picking next index
+        ArrayList<Integer> rowsToKillSorted = new ArrayList<>(rowsToKill);
+        Collections.sort(rowsToKillSorted);
+
+        for (int i = 0; i < rowsToKillSorted.size(); i++) {
+            //delete all marked rows
+            //with every row deleted the next deletion index
+            //moves one down because now the rows that come after
+            //have their index shifted by -1
+            removeRow(rowsToKillSorted.get(i) - i);
+
+            //throw away useless history stack which was added by singular delete action
+            history.pop();
+        }
+
+        ArrayList<Integer> columnsToKillSorted = new ArrayList<>(columnsToKill);
+        Collections.sort(columnsToKillSorted);
+
+        for (int i = 0; i < columnsToKillSorted.size(); i++) {
+            //delete all marked columns
+            //with every column deleted the next deletion index
+            //moves one down because now the columns that come after
+            //have their index shifted by -1
+            removeColumn(columnsToKillSorted.get(i) - i);
+
+            //throw away useless history stack which was added by singular delete action
+            history.pop();
+        }
     }
 
     public void set(int row, int col, Object value) {

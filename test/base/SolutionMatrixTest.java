@@ -58,17 +58,17 @@ public class SolutionMatrixTest {
 
     @Test
     public void removeIllegalRowThrows() {
-        thrown.expect(ArrayIndexOutOfBoundsException.class);
+        thrown.expect(IndexOutOfBoundsException.class);
         m.removeRow(-1);
 
-        thrown.expect(ArrayIndexOutOfBoundsException.class);
+        thrown.expect(IndexOutOfBoundsException.class);
         m.removeRow(2);
 
 
         m.removeRow(0);
         m.removeRow(0);
 
-        thrown.expect(ArrayIndexOutOfBoundsException.class);
+        thrown.expect(IndexOutOfBoundsException.class);
         m.removeRow(0);
     }
 
@@ -83,16 +83,16 @@ public class SolutionMatrixTest {
 
     @Test
     public void removeIllegalColumnThrows() {
-        thrown.expect(ArrayIndexOutOfBoundsException.class);
+        thrown.expect(IndexOutOfBoundsException.class);
         m.removeColumn(-1);
 
-        thrown.expect(ArrayIndexOutOfBoundsException.class);
+        thrown.expect(IndexOutOfBoundsException.class);
         m.removeColumn(2);
 
         m.removeColumn(0);
         m.removeColumn(0);
 
-        thrown.expect(ArrayIndexOutOfBoundsException.class);
+        thrown.expect(IndexOutOfBoundsException.class);
         m.removeColumn(0);
     }
 

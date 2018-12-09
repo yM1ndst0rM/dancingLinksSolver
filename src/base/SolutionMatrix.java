@@ -11,4 +11,5 @@ public interface SolutionMatrix {
     int getColumnCount();
     int getRowId(int rowPosition);
     int getColumnId(int columnPosition);
+    void clearRowAndAffectedColumns(int rowPosition);
 }
