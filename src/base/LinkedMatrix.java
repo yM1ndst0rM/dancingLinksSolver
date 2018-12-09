@@ -2,10 +2,7 @@ package base;
 
 import com.sun.istack.internal.NotNull;
 
-import java.util.ArrayList;
-import java.util.Deque;
-import java.util.Iterator;
-import java.util.LinkedList;
+import java.util.*;
 
 import static base.Node.Direction.*;
 
@@ -159,7 +156,7 @@ public class LinkedMatrix implements SolutionMatrix {
     }
 
     private Node getAnchor(final Type type, final int index) {
-        if(index < 0){
+        if (index < 0) {
             throw new IndexOutOfBoundsException(String.format("Attempting to access column/row %d. This column/row does not exist.", index));
         }
 
@@ -226,7 +223,7 @@ public class LinkedMatrix implements SolutionMatrix {
 
         UndoableAction undoAction = history.pop();
 
-        if(undoAction instanceof RemoveAction) {
+        if (undoAction instanceof RemoveAction) {
             RemoveAction undoRemoveAction = (RemoveAction) undoAction;
 
             //walk every item
@@ -256,7 +253,7 @@ public class LinkedMatrix implements SolutionMatrix {
                 orthogonalNodeA.setInDirection(orthogonalDirectionB, n);
                 orthogonalNodeB.setInDirection(orthogonalDirectionA, n);
             }
-        }else if(undoAction instanceof MultipleUndoAction){
+        } else if (undoAction instanceof MultipleUndoAction) {
             for (int i = 0; i < ((MultipleUndoAction) undoAction).undoActionsCount; i++) {
                 undo();
             }
@@ -301,7 +298,7 @@ public class LinkedMatrix implements SolutionMatrix {
             //The iterable has to be copied over before starting to remove rows
             //because this will break the iterable.
             ArrayList<Node> removedColumn = new ArrayList<>();
-            for (Node n : getLineInDirection(currentNode, BOTTOM)){
+            for (Node n : getLineInDirection(currentNode, BOTTOM)) {
                 removedColumn.add(n);
             }
 
@@ -327,6 +324,40 @@ public class LinkedMatrix implements SolutionMatrix {
         history.push(new MultipleUndoAction(performedOperationsCount));
     }
 
+    @Override
+    public Collection<Integer> getRowsAffectedByColumn(int columnPosition) {
+        ArrayList<Integer> affectedRowIndices = new ArrayList<>();
+        Node columnAnchor = getAnchor(Type.COLUMN, columnPosition);
+        Iterable<Node> column = getLineInDirection(columnAnchor, BOTTOM);
+
+        int currentRowHeaderIndex = 0;
+        Node lastUsedRowHeader = topLeftCorner.getInDirection(BOTTOM);
+
+        for (Node columnElement : column) {
+            if (columnElement.getTag() instanceof HeaderTag) {
+                continue;
+            }
+
+            Iterable<Node> rowReversed = getLineInDirection(columnElement, LEFT);
+
+            for (Node rowElement : rowReversed) {
+                if(rowElement.getTag() instanceof HeaderTag){
+                    Node current = rowElement;
+                    while (current != lastUsedRowHeader){
+                        currentRowHeaderIndex++;
+                        current = current.getInDirection(TOP);
+                    }
+
+                    lastUsedRowHeader = rowElement;
+                    affectedRowIndices.add(currentRowHeaderIndex);
+                    break;
+                }
+            }
+        }
+
+        return affectedRowIndices;
+    }
+
     private int count(@NotNull final Type type) {
         final Node.Direction targetDirection;
         if (type == Type.ROW) {
@@ -350,9 +381,10 @@ public class LinkedMatrix implements SolutionMatrix {
         return itemCount - 1; //we do not count top left corner element which was returned first
     }
 
-    private interface UndoableAction{}
+    private interface UndoableAction {
+    }
 
-    private static class RemoveAction implements UndoableAction{
+    private static class RemoveAction implements UndoableAction {
         private final Type actionType;
         private final Node anchorElement;
 
@@ -362,7 +394,7 @@ public class LinkedMatrix implements SolutionMatrix {
         }
     }
 
-    private static class MultipleUndoAction implements UndoableAction{
+    private static class MultipleUndoAction implements UndoableAction {
         private final int undoActionsCount;
 
         private MultipleUndoAction(int undoActionsCount) {

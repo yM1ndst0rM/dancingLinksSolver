@@ -174,6 +174,18 @@ public class ArrayMatrix implements SolutionMatrix {
         }
     }
 
+    @Override
+    public Collection<Integer> getRowsAffectedByColumn(int columnPosition) {
+        ArrayList<Integer> affectedRowIndices = new ArrayList<>();
+        for (int i = 1; i < currentState.length; i++) {
+            if(currentState[i][columnPosition + 1] != null){
+                affectedRowIndices.add(i - 1);
+            }
+        }
+
+        return affectedRowIndices;
+    }
+
     public void set(int row, int col, Object value) {
         this.currentState[row + 1][col + 1] = value;
     }

@@ -361,4 +361,35 @@ public class SolutionMatrixTest {
 
         assertEquals(1, m.getColumnId(0));
     }
+
+    @Test
+    public void getAffectedRowsForColumn() {
+        m.init(solutionMatrixForAdvancedDeletionTests);
+        assertArrayEquals(new Integer[]{0, 3}, m.getRowsAffectedByColumn(0).toArray());
+        assertArrayEquals(new Integer[]{2, 3}, m.getRowsAffectedByColumn(2).toArray());
+    }
+
+    @Test
+    public void getAffectedRowsForColumnWithUndo() {
+        m.init(solutionMatrixForAdvancedDeletionTests);
+
+        assertArrayEquals(new Integer[]{3, 4}, m.getRowsAffectedByColumn(4).toArray());
+
+        m.clearRowAndAffectedColumns(0);
+
+        assertArrayEquals(new Integer[]{2}, m.getRowsAffectedByColumn(3).toArray());
+
+        m.undo();
+
+        assertArrayEquals(new Integer[]{3, 4}, m.getRowsAffectedByColumn(4).toArray());
+    }
+
+    @Test
+    public void getAffectedRowsForInvalidColumnIndexThrows() {
+        thrown.expect(IndexOutOfBoundsException.class);
+        m.getRowsAffectedByColumn(-1);
+
+        thrown.expect(IndexOutOfBoundsException.class);
+        m.getRowsAffectedByColumn(2);
+    }
 }
