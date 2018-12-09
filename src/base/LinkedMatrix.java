@@ -296,21 +296,33 @@ public class LinkedMatrix implements SolutionMatrix {
 
         Node currentNode = rowAnchor.getInDirection(RIGHT);
         while (currentNode != rowAnchor) {
-            currentNode = currentNode.getInDirection(RIGHT);
-
-            //remove all affected columns
-            remove(Type.COLUMN, currentNode);
-            performedOperationsCount++;
-
             //for each affected column remove all rows affected by that
-            // but be careful not to remove the header row
-            for (Node n : getLineInDirection(currentNode, BOTTOM)) {
-                if (!(n.getTag() instanceof HeaderTag)) {
+
+            //The iterable has to be copied over before starting to remove rows
+            //because this will break the iterable.
+            ArrayList<Node> removedColumn = new ArrayList<>();
+            for (Node n : getLineInDirection(currentNode, BOTTOM)){
+                removedColumn.add(n);
+            }
+
+            for (Node n : removedColumn) {
+                // be careful not to remove the header row
+                if (!(n.getTag() instanceof HeaderTag) && n != currentNode) {
                     remove(Type.ROW, n);
                     performedOperationsCount++;
                 }
             }
+
+            //remove every affected column
+            remove(Type.COLUMN, currentNode);
+            performedOperationsCount++;
+
+            currentNode = currentNode.getInDirection(RIGHT);
         }
+
+        //finally remove offending row itself
+        remove(Type.ROW, currentNode);
+        performedOperationsCount++;
 
         history.push(new MultipleUndoAction(performedOperationsCount));
     }

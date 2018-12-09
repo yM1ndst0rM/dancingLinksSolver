@@ -30,6 +30,15 @@ public class SolutionMatrixTest {
                     {valC, valD}
             };
 
+    private static final Integer[][] solutionMatrixForAdvancedDeletionTests =
+            {
+                    {1, null, null, null, null},
+                    {null, 1, null, null, null},
+                    {null, null, 1, null, null},
+                    {1, null, 1, null, 1},
+                    {null, null, null, null, 1}
+            };
+
     @Parameterized.Parameters
     public static Collection<SolutionMatrix> data() {
         return Arrays.asList(
@@ -209,5 +218,88 @@ public class SolutionMatrixTest {
         m.removeRow(0);
         thrown.expect(IndexOutOfBoundsException.class);
         m.getRowId(1);
+    }
+
+    @Test
+    public void clearRowAndAffectedColumns1() {
+        m.init(solutionMatrixForAdvancedDeletionTests);
+
+        m.clearRowAndAffectedColumns(0);
+        assertEquals(3, m.getRowCount());
+        assertEquals(4, m.getColumnCount());
+
+        assertEquals(1, m.getRowId(0));
+        assertEquals(2, m.getRowId(1));
+        assertEquals(4, m.getRowId(2));
+
+        assertEquals(1, m.getColumnId(0));
+        assertEquals(2, m.getColumnId(1));
+        assertEquals(3, m.getColumnId(2));
+        assertEquals(4, m.getColumnId(3));
+    }
+
+    @Test
+    public void clearRowAndAffectedColumns2() {
+        m.init(solutionMatrixForAdvancedDeletionTests);
+
+        m.clearRowAndAffectedColumns(1);
+        assertEquals(4, m.getRowCount());
+        assertEquals(4, m.getColumnCount());
+
+        assertEquals(0, m.getRowId(0));
+        assertEquals(2, m.getRowId(1));
+        assertEquals(3, m.getRowId(2));
+        assertEquals(4, m.getRowId(3));
+
+        assertEquals(0, m.getColumnId(0));
+        assertEquals(2, m.getColumnId(1));
+        assertEquals(3, m.getColumnId(2));
+        assertEquals(4, m.getColumnId(3));
+    }
+
+    @Test
+    public void clearRowAndAffectedColumns3() {
+        m.init(solutionMatrixForAdvancedDeletionTests);
+
+        m.clearRowAndAffectedColumns(3);
+        assertEquals(1, m.getRowCount());
+        assertEquals(2, m.getColumnCount());
+
+        assertEquals(1, m.getRowId(0));
+
+        assertEquals(1, m.getColumnId(0));
+        assertEquals(3, m.getColumnId(1));
+    }
+
+    @Test
+    public void clearRowAndAffectedColumnUndo() {
+        m.init(solutionMatrixForAdvancedDeletionTests);
+
+        m.clearRowAndAffectedColumns(3);
+        m.undo();
+
+        assertEquals(5, m.getRowCount());
+        assertEquals(5, m.getColumnCount());
+
+        assertEquals(0, m.getRowId(0));
+        assertEquals(1, m.getRowId(1));
+        assertEquals(2, m.getRowId(2));
+        assertEquals(3, m.getRowId(3));
+        assertEquals(4, m.getRowId(4));
+
+        assertEquals(0, m.getColumnId(0));
+        assertEquals(1, m.getColumnId(1));
+        assertEquals(2, m.getColumnId(2));
+        assertEquals(3, m.getColumnId(3));
+        assertEquals(4, m.getColumnId(4));
+    }
+
+    @Test
+    public void clearInvalidRowAndAffectedColumnsThrows() {
+        thrown.expect(IndexOutOfBoundsException.class);
+        m.clearRowAndAffectedColumns(-1);
+
+        thrown.expect(IndexOutOfBoundsException.class);
+        m.clearRowAndAffectedColumns(2);
     }
 }

@@ -61,7 +61,7 @@ public class ArrayMatrix implements SolutionMatrix {
     @Override
     public void removeColumn(final int col) {
         final int actualColIndex = col + 1; //because of the header
-        if (actualColIndex >= currentState.length || actualColIndex < 1) {
+        if (actualColIndex >= currentState[0].length || actualColIndex < 1) {
             throw new ArrayIndexOutOfBoundsException(col);
         }
 
@@ -120,18 +120,21 @@ public class ArrayMatrix implements SolutionMatrix {
 
     @Override
     public void clearRowAndAffectedColumns(final int rowPosition) {
-        final int actualRowIndex = rowPosition + 1;
+        if(rowPosition < 0 || rowPosition >= getRowCount()){
+            throw new ArrayIndexOutOfBoundsException(rowPosition);
+        }
+
         Set<Integer> rowsToKill = new HashSet<>();
         Set<Integer> columnsToKill = new HashSet<>();
 
-        for (int i = 1; i < currentState[actualRowIndex].length; i++) {
+        for (int i = 0; i < getRowCount(); i++) {
             //pick all columns which have intersections with this row
-            if(currentState[actualRowIndex][i] != null){
+            if(get(rowPosition, i) != null){
                 columnsToKill.add(i);
-                for (int j = 1; j < currentState.length; j++) {
+                for (int j = 0; j < getColumnCount(); j++) {
 
                     //for each of affected columns also pick all intersecting rows
-                    if(currentState[j][i] != null){
+                    if(get(j, i) != null){
                         rowsToKill.add(j);
                     }
                 }
