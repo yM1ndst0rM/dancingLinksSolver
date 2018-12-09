@@ -75,7 +75,7 @@ public class Solver {
         }
 
         int rowCount = m.getRowCount();
-        for (int i = lastStepPosition; i < rowCount; i++) {
+        for (int i = 0; i < rowCount; i++) {
             history.add(possibleSteps[m.getRowId(i)]);
             m.clearRowAndAffectedColumns(i);
 
