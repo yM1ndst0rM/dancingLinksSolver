@@ -2,6 +2,7 @@ import base.SolutionMatrix;
 import com.sun.istack.internal.NotNull;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -58,14 +59,13 @@ public class Solver {
 
 
         //solve it
-        nextSolveStep(possibleSteps, l, sideLen * variationsCount, 0, m, new ArrayList<>());
+        nextSolveStep(possibleSteps, l, sideLen * variationsCount, m, new ArrayList<>());
     }
 
     private static void nextSolveStep(
             @NotNull final Step[] possibleSteps,
             @NotNull final SolutionListener l,
             final int firstOptionalConditionId,
-            final int lastStepPosition,
             @NotNull final SolutionMatrix m,
             @NotNull final List<Step> history){
 
@@ -74,12 +74,13 @@ public class Solver {
             return;
         }
 
-        int rowCount = m.getRowCount();
-        for (int i = 0; i < rowCount; i++) {
-            history.add(possibleSteps[m.getRowId(i)]);
-            m.clearRowAndAffectedColumns(i);
 
-            nextSolveStep(possibleSteps, l, firstOptionalConditionId, i, m, history);
+        Collection<Integer> rowsAffectedByColumn = m.getRowsAffectedByColumn(0);
+        for (int currentRowIndex: rowsAffectedByColumn) {
+            history.add(possibleSteps[m.getRowId(currentRowIndex)]);
+            m.clearRowAndAffectedColumns(currentRowIndex);
+
+            nextSolveStep(possibleSteps, l, firstOptionalConditionId, m, history);
 
             m.undo();
             history.remove(history.size() - 1);
