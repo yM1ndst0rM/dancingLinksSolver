@@ -127,11 +127,11 @@ public class ArrayMatrix implements SolutionMatrix {
         Set<Integer> rowsToKill = new HashSet<>();
         Set<Integer> columnsToKill = new HashSet<>();
 
-        for (int i = 0; i < getRowCount(); i++) {
+        for (int i = 0; i < getColumnCount(); i++) {
             //pick all columns which have intersections with this row
             if(get(rowPosition, i) != null){
                 columnsToKill.add(i);
-                for (int j = 0; j < getColumnCount(); j++) {
+                for (int j = 0; j < getRowCount(); j++) {
 
                     //for each of affected columns also pick all intersecting rows
                     if(get(j, i) != null){

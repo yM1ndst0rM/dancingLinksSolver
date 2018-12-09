@@ -302,4 +302,63 @@ public class SolutionMatrixTest {
         thrown.expect(IndexOutOfBoundsException.class);
         m.clearRowAndAffectedColumns(2);
     }
+
+    @Test
+    public void clearRowAndAffectedColumn_MoreColumnsThanRows() {
+        Integer[][] solutionMatrix =
+                {
+                        {1, null, null, null, null, null, null, null},
+                        {null, 1, null, null, null, null, 1, null}
+                };
+
+        m.init(solutionMatrix);
+
+        m.clearRowAndAffectedColumns(0);
+
+        assertEquals(1, m.getRowCount());
+        assertEquals(7, m.getColumnCount());
+
+        assertEquals(1, m.getRowId(0));
+
+        assertEquals(1, m.getColumnId(0));
+        assertEquals(2, m.getColumnId(1));
+        assertEquals(3, m.getColumnId(2));
+        assertEquals(4, m.getColumnId(3));
+        assertEquals(5, m.getColumnId(4));
+        assertEquals(6, m.getColumnId(5));
+        assertEquals(7, m.getColumnId(6));
+    }
+
+
+    @Test
+    public void clearRowAndAffectedColumn_MoreRowsThanColumns() {
+        Integer[][] solutionMatrix =
+                {
+                        {1, null},
+                        {null, null},
+                        {null, null},
+                        {null, null},
+                        {1, 1},
+                        {null, null},
+                        {null, 1},
+                        {1, null},
+                        {null, 1}
+                };
+
+        m.init(solutionMatrix);
+
+        m.clearRowAndAffectedColumns(0);
+
+        assertEquals(6, m.getRowCount());
+        assertEquals(1, m.getColumnCount());
+
+        assertEquals(1, m.getRowId(0));
+        assertEquals(2, m.getRowId(1));
+        assertEquals(3, m.getRowId(2));
+        assertEquals(5, m.getRowId(3));
+        assertEquals(6, m.getRowId(4));
+        assertEquals(8, m.getRowId(5));
+
+        assertEquals(1, m.getColumnId(0));
+    }
 }
